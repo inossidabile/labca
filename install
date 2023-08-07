@@ -4,7 +4,7 @@
 # (c) 2018-2022 Arjan Hakkesteegt
 #
 # Install with this command from a Linux machine (only tested with Debian and Ubuntu):
-# curl -sSL https://raw.githubusercontent.com/hakwerk/labca/master/install | bash
+# curl -sSL https://raw.githubusercontent.com/inossidabile/labca/master/install | bash
 
 set -e
 
@@ -22,7 +22,7 @@ boulderDir="$baseDir/boulder"
 boulderLabCADir="${boulderDir}_labca"
 dockerComposeVersion="v2.5.0"
 
-labcaUrl="https://github.com/hakwerk/labca/"
+labcaUrl="https://github.com/inossidabile/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
 boulderTag="release-2022-12-05"
 
@@ -113,7 +113,7 @@ check_root() {
         local msg="Run using sudo"
         if command -v sudo &> /dev/null; then
             msg_ok "$msg"
-            exec curl -sSL https://raw.githubusercontent.com/hakwerk/labca/master/install | sudo bash "$@"
+            exec curl -sSL https://raw.githubusercontent.com/inossidabile/labca/master/install | sudo bash "$@"
             exit $?
         else
             msg_err "$msg"
@@ -661,7 +661,7 @@ config_boulder() {
     sed -i -e "s|https://boulder:4431/terms/v7|https://$LABCA_FQDN/terms/v1|" config/wfe2.json
     sed -i -e "s|http://boulder:4430/acme/issuer-cert|http://$LABCA_FQDN/acme/issuer-cert|" config/wfe2.json
     sed -i -e "s|http://127.0.0.1:4000/acme/issuer-cert|https://$LABCA_FQDN/acme/issuer-cert|" config/wfe2.json
-    sed -i -e "s|letsencrypt/boulder|hakwerk/labca|" config/wfe2.json
+    sed -i -e "s|letsencrypt/boulder|inossidabile/labca|" config/wfe2.json
     sed -i -e "s|http://127.0.0.1:4002/|http://$LABCA_FQDN/ocsp/|g" config/ca-a.json
     sed -i -e "s|http://127.0.0.1:4002/|http://$LABCA_FQDN/ocsp/|g" config/ca-b.json
     sed -i -e "s|http://example.com/cps|http://$LABCA_FQDN/cps/|g" config/ca-a.json
