@@ -1,7 +1,36 @@
 version: '3'
 name: labca
 services:
+  dnsmasq:
+    platform: linux/amd64
+    privileged: true
+    image: drpsychick/dnsmasq
+    container_name: dnsmasq
+    depends_on:
+      - bconsul
+    environment:
+      DMQ_DNS_SERVER: >
+        server=/service.consul/10.55.55.10\n
+        server=127.0.0.11
+      DMQ_DNS_CNAME: >
+        cname=boulder-mysql,db.labca.infra.vanilla
+    expose:
+      - 53
+    restart: unless-stopped
+    networks:
+      consulnet:
+        ipv4_address: 10.55.55.11
+        aliases:
+          - dnsmasq
+      bluenet:
+        aliases:
+          - dnsmasq
+      rednet:
+        aliases:
+          - dnsmasq
+
   boulder:
+    platform: linux/amd64
     # Should match one of the GO_DEV_VERSIONS in test/boulder-tools/tag_and_upload.sh.
     image: ghcr.io/hakwerk/labca-boulder:${LABCA_IMAGE_VERSION:-latest}
     environment:
@@ -32,13 +61,13 @@ services:
     # are configured via the ServerAddress field of cmd.GRPCClientConfig.
     # TODO: Remove this when ServerAddress is deprecated in favor of SRV records
     # and DNSAuthority.
-    dns: 10.55.55.10
+    dns: 10.55.55.11
     expose:
       - 4001 # ACMEv2
       - 4002 # OCSP
       - 4003 # OCSP
     depends_on:
-      - bmysql
+      # - bmysql
       - bconsul
       - control
     entrypoint: labca/entrypoint.sh
@@ -50,30 +79,32 @@ services:
         max-file: "5"
     restart: always
 
-  bmysql:
-    image: mariadb:10.5
-    volumes:
-      - dbdata:/var/lib/mysql
-    networks:
-      bluenet:
-        aliases:
-          - boulder-mysql
-    environment:
-      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-    # Send slow queries to a table so we can check for them in the
-    # integration tests. For now we ignore queries not using indexes,
-    # because that seems to trigger based on the optimizer's choice to not
-    # use an index for certain queries, particularly when tables are still
-    # small.
-    command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "500k"
-        max-file: "5"
-    restart: always
+  # bmysql:
+  #   platform: linux/amd64
+  #   image: mariadb:10.5
+  #   volumes:
+  #     - dbdata:/var/lib/mysql
+  #   networks:
+  #     bluenet:
+  #       aliases:
+  #         - boulder-mysql
+  #   environment:
+  #     MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+  #   # Send slow queries to a table so we can check for them in the
+  #   # integration tests. For now we ignore queries not using indexes,
+  #   # because that seems to trigger based on the optimizer's choice to not
+  #   # use an index for certain queries, particularly when tables are still
+  #   # small.
+  #   command: mysqld --bind-address=0.0.0.0 --slow-query-log --log-output=TABLE --log-queries-not-using-indexes=ON
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "500k"
+  #       max-file: "5"
+  #   restart: always
 
   bconsul:
+    platform: linux/amd64
     image: hashicorp/consul:1.14.2
     depends_on:
       - control
@@ -91,6 +122,7 @@ services:
     restart: always
 
   gui:
+    platform: linux/amd64
     image: ghcr.io/hakwerk/labca-gui:${LABCA_IMAGE_VERSION:-latest}
     networks:
       - bluenet
@@ -104,7 +136,7 @@ services:
     expose:
       - 3000
     depends_on:
-      - bmysql
+      # - bmysql
       - control
     working_dir: /opt/labca
     command: bin/labca-gui
@@ -116,6 +148,7 @@ services:
     restart: always
 
   nginx:
+    platform: linux/amd64
     image: nginx:1.25.1
     restart: always
     networks:
@@ -131,6 +164,7 @@ services:
       - control
 
   control:
+    platform: linux/amd64
     image: ghcr.io/hakwerk/labca-control:${LABCA_IMAGE_VERSION:-latest}
     networks:
       - bluenet

@@ -28,7 +28,7 @@ boulderDir=${boulderDir:-"$baseDir/boulder"}
 boulderLabCADir=${boulderLabCADir:-"${boulderDir}_labca"}
 dockerComposeVersion="v2.5.0"
 
-labcaUrl="https://github.com/hakwerk/labca/"
+labcaUrl="https://github.com/inossidabile/labca/"
 boulderUrl="https://github.com/letsencrypt/boulder/"
 boulderTag="release-2023-07-11"
 
